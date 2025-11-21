@@ -16,60 +16,58 @@ export const ContactSection = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  // Update your form submission handler in ContactSection.jsx
 
-    // Get form data
-    const formData = new FormData(e.target);
-    const data = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      message: formData.get('message')
-    };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setStatus('sending');
+  console.log('Submitting form data:', formData);
 
-    console.log('Submitting form data:', data);
+  try {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', [...response.headers.entries()]);
+    
+    // Get raw response text first
+    const rawText = await response.text();
+    console.log('Raw response:', rawText);
+    
+    // Try to parse as JSON
+    let data;
     try {
-      // Send data to backend API
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
-
-      console.log('Response status:', response.status);
-      const result = await response.json();
-      console.log('Response data:', result);
-
-      if (result.success) {
-        toast({
-          title: "Message sent! ✅",
-          description: result.message || "Thank you for your message. I'll get back to you soon.",
-        });
-        
-        // Clear the form
-        e.target.reset();
-      } else {
-        toast({
-          title: "Failed to send",
-          description: result.message || "Something went wrong. Please try again.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Connection error",
-        description: "Unable to send message. Please check your connection and try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      console.error('Received HTML/text instead of JSON:', rawText.substring(0, 500));
+      throw new Error('Server returned invalid response. Check Vercel function logs.');
     }
-  };
+
+    if (response.ok && data.success) {
+      setStatus('success');
+      setFormData({ name: '', email: '', message: '' });
+      
+      setTimeout(() => {
+        setStatus('idle');
+      }, 5000);
+    } else {
+      throw new Error(data.message || 'Failed to send message');
+    }
+  } catch (error) {
+    console.error('Submission error:', error);
+    setStatus('error');
+    
+    setTimeout(() => {
+      setStatus('idle');
+    }, 5000);
+  }
+};
 
   return (
     <section id="contact" className="py-24 px-4 relative bg-secondary/30">
