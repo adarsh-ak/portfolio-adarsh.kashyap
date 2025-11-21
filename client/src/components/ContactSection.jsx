@@ -18,49 +18,35 @@ export const ContactSection = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setIsSubmitting(true);
 
-    // Get form data
     const formData = new FormData(e.target);
-    const data = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      message: formData.get('message')
-    };
-
+    
     try {
-      // Send data to backend
-      const response = await fetch('/api/contact', {
+      // Using FormSubmit.co - NO BACKEND NEEDED!
+      const response = await fetch('https://formsubmit.co/adarshspn2005@gmail.com', {
         method: 'POST',
+        body: formData,
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
+          'Accept': 'application/json'
+        }
       });
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.ok) {
         toast({
           title: "Message sent!",
           description: "Thank you for your message. I'll get back to you soon.",
         });
         
-        // Clear the form
         e.target.reset();
       } else {
-        toast({
-          title: "Failed to send",
-          description: result.message || "Something went wrong. Please try again.",
-          variant: "destructive"
-        });
+        throw new Error('Failed to send');
       }
     } catch (error) {
       console.error('Error:', error);
       toast({
-        title: "Connection error",
-        description: "Unable to send message. Please check your connection.",
+        title: "Failed to send",
+        description: "Something went wrong. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -83,19 +69,18 @@ export const ContactSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="space-y-8">
             <h3 className="text-2xl font-semibold mb-6">
-              {" "}
               Contact Information
             </h3>
 
             <div className="space-y-6 justify-center">
               <div className="flex items-start space-x-4">
                 <div className="p-3 rounded-full bg-primary/10">
-                  <Mail className="h-6 w-6 text-primary" />{" "}
+                  <Mail className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium"> Email</h4>
+                  <h4 className="font-medium">Email</h4>
                   <a
-                    href="adarshspn2005@gmail.com"
+                    href="mailto:adarshspn2005@gmail.com"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     adarshspn2005@gmail.com
@@ -104,12 +89,12 @@ export const ContactSection = () => {
               </div>
               <div className="flex items-start space-x-4">
                 <div className="p-3 rounded-full bg-primary/10">
-                  <Phone className="h-6 w-6 text-primary" />{" "}
+                  <Phone className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium"> Phone</h4>
+                  <h4 className="font-medium">Phone</h4>
                   <a
-                    href="tel:+91 95550 19735"
+                    href="tel:+919555019735"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     +91 95550 19735
@@ -118,49 +103,47 @@ export const ContactSection = () => {
               </div>
               <div className="flex items-start space-x-4">
                 <div className="p-3 rounded-full bg-primary/10">
-                  <MapPin className="h-6 w-6 text-primary" />{" "}
+                  <MapPin className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium"> Location</h4>
-                  <a className="text-muted-foreground hover:text-primary transition-colors">
+                  <h4 className="font-medium">Location</h4>
+                  <p className="text-muted-foreground">
                     Ghaziabad, Uttar Pradesh, India
-                  </a>
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="pt-8">
-              <h4 className="font-medium mb-4"> Connect With Me</h4>
+              <h4 className="font-medium mb-4">Connect With Me</h4>
               <div className="flex space-x-4 justify-center">
-                <a href="https://leetcode.com/u/ak_adarshkashyap/" target="_blank">
-                  <Code />
+                <a href="https://leetcode.com/u/ak_adarshkashyap/" target="_blank" rel="noopener noreferrer">
+                  <Code className="h-6 w-6 hover:text-primary transition-colors" />
                 </a>
-                <a href="https://www.linkedin.com/in/adarsh-kumar-kashyap/" target="_blank">
-                  <Linkedin />
+                <a href="https://www.linkedin.com/in/adarsh-kumar-kashyap/" target="_blank" rel="noopener noreferrer">
+                  <Linkedin className="h-6 w-6 hover:text-primary transition-colors" />
                 </a>
-                <a href="https://github.com/adarsh-ak" target="_blank">
-                  <Github />
+                <a href="https://github.com/adarsh-ak" target="_blank" rel="noopener noreferrer">
+                  <Github className="h-6 w-6 hover:text-primary transition-colors" />
                 </a>
-                <a href="#" target="_blank">
-                  <Instagram />
+                <a href="#" target="_blank" rel="noopener noreferrer">
+                  <Instagram className="h-6 w-6 hover:text-primary transition-colors" />
                 </a>
               </div>
             </div>
           </div>
 
-          <div
-            className="bg-card p-8 rounded-lg shadow-xs"
-            onSubmit={handleSubmit}
-          >
-            <h3 className="text-2xl font-semibold mb-6"> Send a Message</h3>
+          <div className="bg-card p-8 rounded-lg shadow-xs">
+            <h3 className="text-2xl font-semibold mb-6">Send a Message</h3>
 
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Hidden fields for FormSubmit configuration */}
+              <input type="hidden" name="_captcha" value="false" />
+              <input type="hidden" name="_template" value="table" />
+              <input type="hidden" name="_subject" value="New Portfolio Contact!" />
+              
               <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium mb-2"
-                >
-                  {" "}
+                <label htmlFor="name" className="block text-sm font-medium mb-2">
                   Your Name
                 </label>
                 <input
@@ -168,17 +151,13 @@ export const ContactSection = () => {
                   id="name"
                   name="name"
                   required
-                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-hidden foucs:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Enter your name..."
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium mb-2"
-                >
-                  {" "}
+                <label htmlFor="email" className="block text-sm font-medium mb-2">
                   Your Email
                 </label>
                 <input
@@ -186,24 +165,21 @@ export const ContactSection = () => {
                   id="email"
                   name="email"
                   required
-                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-hidden foucs:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Enter your email id..."
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium mb-2"
-                >
-                  {" "}
+                <label htmlFor="message" className="block text-sm font-medium mb-2">
                   Your Message
                 </label>
                 <textarea
                   id="message"
                   name="message"
                   required
-                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-hidden foucs:ring-2 focus:ring-primary resize-none"
+                  rows="5"
+                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   placeholder="Write to me..."
                 />
               </div>
