@@ -20,33 +20,50 @@ export const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Get form data
     const formData = new FormData(e.target);
-    
+    const data = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      message: formData.get('message')
+    };
+
+    console.log('Submitting form data:', data);
+
     try {
-      // Using FormSubmit.co - NO BACKEND NEEDED!
-      const response = await fetch('https://formsubmit.co/adarshspn2005@gmail.com', {
+      // Send data to backend API
+      const response = await fetch('/api/contact', {
         method: 'POST',
-        body: formData,
         headers: {
-          'Accept': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
       });
 
-      if (response.ok) {
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response data:', result);
+
+      if (result.success) {
         toast({
-          title: "Message sent!",
-          description: "Thank you for your message. I'll get back to you soon.",
+          title: "Message sent! ✅",
+          description: result.message || "Thank you for your message. I'll get back to you soon.",
         });
         
+        // Clear the form
         e.target.reset();
       } else {
-        throw new Error('Failed to send');
+        toast({
+          title: "Failed to send",
+          description: result.message || "Something went wrong. Please try again.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error:', error);
       toast({
-        title: "Failed to send",
-        description: "Something went wrong. Please try again.",
+        title: "Connection error",
+        description: "Unable to send message. Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {
@@ -117,17 +134,37 @@ export const ContactSection = () => {
             <div className="pt-8">
               <h4 className="font-medium mb-4">Connect With Me</h4>
               <div className="flex space-x-4 justify-center">
-                <a href="https://leetcode.com/u/ak_adarshkashyap/" target="_blank" rel="noopener noreferrer">
-                  <Code className="h-6 w-6 hover:text-primary transition-colors" />
+                <a 
+                  href="https://leetcode.com/u/ak_adarshkashyap/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Code className="h-6 w-6" />
                 </a>
-                <a href="https://www.linkedin.com/in/adarsh-kumar-kashyap/" target="_blank" rel="noopener noreferrer">
-                  <Linkedin className="h-6 w-6 hover:text-primary transition-colors" />
+                <a 
+                  href="https://www.linkedin.com/in/adarsh-kumar-kashyap/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Linkedin className="h-6 w-6" />
                 </a>
-                <a href="https://github.com/adarsh-ak" target="_blank" rel="noopener noreferrer">
-                  <Github className="h-6 w-6 hover:text-primary transition-colors" />
+                <a 
+                  href="https://github.com/adarsh-ak" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Github className="h-6 w-6" />
                 </a>
-                <a href="#" target="_blank" rel="noopener noreferrer">
-                  <Instagram className="h-6 w-6 hover:text-primary transition-colors" />
+                <a 
+                  href="#" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  <Instagram className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -137,13 +174,11 @@ export const ContactSection = () => {
             <h3 className="text-2xl font-semibold mb-6">Send a Message</h3>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Hidden fields for FormSubmit configuration */}
-              <input type="hidden" name="_captcha" value="false" />
-              <input type="hidden" name="_template" value="table" />
-              <input type="hidden" name="_subject" value="New Portfolio Contact!" />
-              
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium mb-2"
+                >
                   Your Name
                 </label>
                 <input
@@ -157,7 +192,10 @@ export const ContactSection = () => {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium mb-2"
+                >
                   Your Email
                 </label>
                 <input
@@ -171,7 +209,10 @@ export const ContactSection = () => {
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium mb-2">
+                <label
+                  htmlFor="message"
+                  className="block text-sm font-medium mb-2"
+                >
                   Your Message
                 </label>
                 <textarea
@@ -188,7 +229,8 @@ export const ContactSection = () => {
                 type="submit"
                 disabled={isSubmitting}
                 className={cn(
-                  "cosmic-button w-full flex items-center justify-center gap-2"
+                  "cosmic-button w-full flex items-center justify-center gap-2",
+                  isSubmitting && "opacity-50 cursor-not-allowed"
                 )}
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
