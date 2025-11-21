@@ -12,82 +12,66 @@ import { cn } from "../lib/utils";
 import { useToast } from "../hooks/use-toast";
 import { useState } from "react";
 
-// Replace this with your deployed backend URL
 const BACKEND_URL = "https://portfolio-adarsh-kashyap-udo5.vercel.app";
 
 export const ContactSection = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: ''
+    name: "",
+    email: "",
+    message: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    console.log('📤 Submitting to backend:', BACKEND_URL);
-    console.log('📋 Form data:', formData);
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/contact`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
-      console.log('📊 Response status:', response.status);
-      
       const rawText = await response.text();
-      console.log('📄 Raw response:', rawText);
-      
+
       let data;
       try {
         data = JSON.parse(rawText);
-        console.log('✅ Parsed JSON:', data);
-      } catch (parseError) {
-        console.error('❌ JSON Parse Error:', parseError);
-        
+      } catch {
         toast({
           title: "Server Error",
           description: "Backend returned invalid response. Check backend logs.",
           variant: "destructive",
         });
-        
+
         setIsSubmitting(false);
         return;
       }
 
       if (response.ok && data.success) {
-        console.log('✅ Message sent successfully!');
-        
         toast({
           title: "Message Sent! ✅",
           description: data.message || "Check your email for confirmation.",
         });
-        
-        setFormData({ name: '', email: '', message: '' });
+
+        setFormData({ name: "", email: "", message: "" });
         e.target.reset();
-        
       } else {
-        console.error('❌ Server returned error:', data);
-        throw new Error(data.message || 'Failed to send message');
+        throw new Error(data.message || "Failed to send message");
       }
     } catch (error) {
-      console.error('❌ Submission error:', error);
-      
       toast({
         title: "Failed to Send",
         description: error.message || "Please try again later.",
@@ -131,6 +115,7 @@ export const ContactSection = () => {
                   </a>
                 </div>
               </div>
+
               <div className="flex items-start space-x-4">
                 <div className="p-3 rounded-full bg-primary/10">
                   <Phone className="h-6 w-6 text-primary" />
@@ -145,6 +130,7 @@ export const ContactSection = () => {
                   </a>
                 </div>
               </div>
+
               <div className="flex items-start space-x-4">
                 <div className="p-3 rounded-full bg-primary/10">
                   <MapPin className="h-6 w-6 text-primary" />
@@ -161,33 +147,33 @@ export const ContactSection = () => {
             <div className="pt-8">
               <h4 className="font-medium mb-4">Connect With Me</h4>
               <div className="flex space-x-4 justify-center">
-                <a 
-                  href="https://leetcode.com/u/ak_adarshkashyap/" 
-                  target="_blank" 
+                <a
+                  href="https://leetcode.com/u/ak_adarshkashyap/"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
                   <Code className="h-6 w-6" />
                 </a>
-                <a 
-                  href="https://www.linkedin.com/in/adarsh-kumar-kashyap/" 
-                  target="_blank" 
+                <a
+                  href="https://www.linkedin.com/in/adarsh-kumar-kashyap/"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
                   <Linkedin className="h-6 w-6" />
                 </a>
-                <a 
-                  href="https://github.com/adarsh-ak" 
-                  target="_blank" 
+                <a
+                  href="https://github.com/adarsh-ak"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
                   <Github className="h-6 w-6" />
                 </a>
-                <a 
-                  href="#" 
-                  target="_blank" 
+                <a
+                  href="#"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                 >
@@ -202,10 +188,7 @@ export const ContactSection = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium mb-2"
-                >
+                <label htmlFor="name" className="block text-sm font-medium mb-2">
                   Your Name
                 </label>
                 <input
@@ -222,10 +205,7 @@ export const ContactSection = () => {
               </div>
 
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium mb-2"
-                >
+                <label htmlFor="email" className="block text-sm font-medium mb-2">
                   Your Email
                 </label>
                 <input
@@ -276,8 +256,7 @@ export const ContactSection = () => {
                   </>
                 ) : (
                   <>
-                    Send Message
-                    <Send size={16} />
+                    Send Message <Send size={16} />
                   </>
                 )}
               </button>
