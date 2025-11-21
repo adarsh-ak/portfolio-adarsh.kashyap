@@ -15,59 +15,91 @@ import { useState } from "react";
 export const ContactSection = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
 
-  // Update your form submission handler in ContactSection.jsx
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setStatus('sending');
-  console.log('Submitting form data:', formData);
-
-  try {
-    const response = await fetch('/api/contact', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', [...response.headers.entries()]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
     
-    // Get raw response text first
-    const rawText = await response.text();
-    console.log('Raw response:', rawText);
-    
-    // Try to parse as JSON
-    let data;
+    console.log('📤 Submitting form data:', formData);
+
     try {
-      data = JSON.parse(rawText);
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      console.error('Received HTML/text instead of JSON:', rawText.substring(0, 500));
-      throw new Error('Server returned invalid response. Check Vercel function logs.');
-    }
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    if (response.ok && data.success) {
-      setStatus('success');
-      setFormData({ name: '', email: '', message: '' });
+      console.log('📊 Response status:', response.status);
+      console.log('📋 Response headers:', [...response.headers.entries()]);
       
-      setTimeout(() => {
-        setStatus('idle');
-      }, 5000);
-    } else {
-      throw new Error(data.message || 'Failed to send message');
+      // Get raw response text first
+      const rawText = await response.text();
+      console.log('📄 Raw response:', rawText);
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(rawText);
+        console.log('✅ Parsed JSON:', data);
+      } catch (parseError) {
+        console.error('❌ JSON Parse Error:', parseError);
+        console.error('Received HTML/text instead of JSON:', rawText.substring(0, 500));
+        
+        toast({
+          title: "Server Error",
+          description: "Server returned invalid response. Check Vercel function logs.",
+          variant: "destructive",
+        });
+        
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (response.ok && data.success) {
+        console.log('✅ Message sent successfully!');
+        
+        toast({
+          title: "Message Sent! ✅",
+          description: data.message || "Check your email for confirmation.",
+        });
+        
+        // Reset form
+        setFormData({ name: '', email: '', message: '' });
+        
+        // Reset the actual form element
+        e.target.reset();
+        
+      } else {
+        console.error('❌ Server returned error:', data);
+        throw new Error(data.message || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('❌ Submission error:', error);
+      
+      toast({
+        title: "Failed to Send",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error) {
-    console.error('Submission error:', error);
-    setStatus('error');
-    
-    setTimeout(() => {
-      setStatus('idle');
-    }, 5000);
-  }
-};
+  };
 
   return (
     <section id="contact" className="py-24 px-4 relative bg-secondary/30">
@@ -183,8 +215,11 @@ const handleSubmit = async (e) => {
                   type="text"
                   id="name"
                   name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Enter your name..."
                 />
               </div>
@@ -200,8 +235,11 @@ const handleSubmit = async (e) => {
                   type="email"
                   id="email"
                   name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Enter your email id..."
                 />
               </div>
@@ -216,9 +254,12 @@ const handleSubmit = async (e) => {
                 <textarea
                   id="message"
                   name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   required
+                  disabled={isSubmitting}
                   rows="5"
-                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Write to me..."
                 />
               </div>
@@ -231,8 +272,17 @@ const handleSubmit = async (e) => {
                   isSubmitting && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
-                <Send size={16} />
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    Send Message
+                    <Send size={16} />
+                  </>
+                )}
               </button>
             </form>
           </div>
