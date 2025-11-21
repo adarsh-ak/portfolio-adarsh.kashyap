@@ -1,46 +1,56 @@
-// server.js
-const express = require('express');
 const nodemailer = require('nodemailer');
-const cors = require('cors');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+// Rate limiting helper (simple in-memory)
+const requests = new Map();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+function rateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxRequests = 5;
 
-// Rate limiting to prevent spam
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
-});
-
-app.use('/api/contact', limiter);
-
-// Configure nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // or use 'smtp.gmail.com'
-  auth: {
-    user: process.env.EMAIL_USER, // Your Gmail address
-    pass: process.env.EMAIL_PASS  // Your Gmail App Password
+  if (!requests.has(ip)) {
+    requests.set(ip, []);
   }
-});
 
-// Test email configuration on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Email configuration error:', error);
-  } else {
-    console.log('Email server is ready to send messages');
+  const userRequests = requests.get(ip).filter(time => now - time < windowMs);
+  
+  if (userRequests.length >= maxRequests) {
+    return false;
   }
-});
 
-// Contact form endpoint
-app.post('/api/contact', async (req, res) => {
+  userRequests.push(now);
+  requests.set(ip, userRequests);
+  return true;
+}
+
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+
+  // Rate limiting
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  if (!rateLimit(ip)) {
+    return res.status(429).json({ 
+      success: false, 
+      message: 'Too many requests, please try again later.' 
+    });
+  }
+
   const { name, email, message } = req.body;
 
   // Validation
@@ -51,7 +61,6 @@ app.post('/api/contact', async (req, res) => {
     });
   }
 
-  // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ 
@@ -60,11 +69,19 @@ app.post('/api/contact', async (req, res) => {
     });
   }
 
-  // Email options
+  // Configure nodemailer
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_USER, // Send to yourself
-    replyTo: email, // Set reply-to as the sender's email
+    to: process.env.EMAIL_USER,
+    replyTo: email,
     subject: `Portfolio Contact: Message from ${name}`,
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
@@ -77,15 +94,10 @@ app.post('/api/contact', async (req, res) => {
           <h3 style="margin-top: 0;">Message:</h3>
           <p style="white-space: pre-wrap;">${message}</p>
         </div>
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-        <p style="color: #666; font-size: 12px;">
-          This message was sent from your portfolio contact form.
-        </p>
       </div>
     `
   };
 
-  // Auto-reply to the sender
   const autoReplyOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -99,19 +111,12 @@ app.post('/api/contact', async (req, res) => {
           <p style="white-space: pre-wrap;">${message}</p>
         </div>
         <p>Best regards,<br>Adarsh Kumar Kashyap</p>
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-        <p style="color: #666; font-size: 12px;">
-          This is an automated response. Please do not reply to this email.
-        </p>
       </div>
     `
   };
 
   try {
-    // Send email to yourself
     await transporter.sendMail(mailOptions);
-    
-    // Send auto-reply to sender
     await transporter.sendMail(autoReplyOptions);
 
     res.status(200).json({ 
@@ -125,13 +130,4 @@ app.post('/api/contact', async (req, res) => {
       message: 'Failed to send message. Please try again later.' 
     });
   }
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Server is running' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+}
