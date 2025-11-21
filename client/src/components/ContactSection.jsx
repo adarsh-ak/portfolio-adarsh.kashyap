@@ -13,7 +13,7 @@ import { useToast } from "../hooks/use-toast";
 import { useState } from "react";
 
 // Replace this with your deployed backend URL
-const BACKEND_URL = "https://portfolio-adarsh-kashyap-udo5.vercel.app/";
+const BACKEND_URL = "https://portfolio-adarsh-kashyap-udo5.vercel.app";
 
 export const ContactSection = () => {
   const { toast } = useToast();
