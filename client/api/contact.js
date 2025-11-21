@@ -1,54 +1,20 @@
+// api/contact.js
 const nodemailer = require('nodemailer');
 
-// Rate limiting helper (simple in-memory)
-const requests = new Map();
-
-function rateLimit(ip) {
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxRequests = 5;
-
-  if (!requests.has(ip)) {
-    requests.set(ip, []);
-  }
-
-  const userRequests = requests.get(ip).filter(time => now - time < windowMs);
-  
-  if (userRequests.length >= maxRequests) {
-    return false;
-  }
-
-  userRequests.push(now);
-  requests.set(ip, userRequests);
-  return true;
-}
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
-  }
-
-  // Rate limiting
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  if (!rateLimit(ip)) {
-    return res.status(429).json({ 
-      success: false, 
-      message: 'Too many requests, please try again later.' 
-    });
   }
 
   const { name, email, message } = req.body;
@@ -119,15 +85,15 @@ export default async function handler(req, res) {
     await transporter.sendMail(mailOptions);
     await transporter.sendMail(autoReplyOptions);
 
-    res.status(200).json({ 
+    return res.status(200).json({ 
       success: true, 
       message: 'Message sent successfully!' 
     });
   } catch (error) {
     console.error('Error sending email:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false, 
       message: 'Failed to send message. Please try again later.' 
     });
   }
-}
+};
