@@ -12,6 +12,9 @@ import { cn } from "../lib/utils";
 import { useToast } from "../hooks/use-toast";
 import { useState } from "react";
 
+// Replace this with your deployed backend URL
+const BACKEND_URL = "https://portfolio-adarsh-kashyap-udo5.vercel.app/";
+
 export const ContactSection = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,10 +36,11 @@ export const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    console.log('📤 Submitting form data:', formData);
+    console.log('📤 Submitting to backend:', BACKEND_URL);
+    console.log('📋 Form data:', formData);
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch(`${BACKEND_URL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,24 +49,20 @@ export const ContactSection = () => {
       });
 
       console.log('📊 Response status:', response.status);
-      console.log('📋 Response headers:', [...response.headers.entries()]);
       
-      // Get raw response text first
       const rawText = await response.text();
       console.log('📄 Raw response:', rawText);
       
-      // Try to parse as JSON
       let data;
       try {
         data = JSON.parse(rawText);
         console.log('✅ Parsed JSON:', data);
       } catch (parseError) {
         console.error('❌ JSON Parse Error:', parseError);
-        console.error('Received HTML/text instead of JSON:', rawText.substring(0, 500));
         
         toast({
           title: "Server Error",
-          description: "Server returned invalid response. Check Vercel function logs.",
+          description: "Backend returned invalid response. Check backend logs.",
           variant: "destructive",
         });
         
@@ -78,10 +78,7 @@ export const ContactSection = () => {
           description: data.message || "Check your email for confirmation.",
         });
         
-        // Reset form
         setFormData({ name: '', email: '', message: '' });
-        
-        // Reset the actual form element
         e.target.reset();
         
       } else {
