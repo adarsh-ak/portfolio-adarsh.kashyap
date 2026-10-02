@@ -172,7 +172,7 @@ export const ContactSection = () => {
                   <Github className="h-6 w-6" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.instagram.com/adarshkashyap_ak"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
