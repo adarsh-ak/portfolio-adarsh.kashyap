@@ -1,5 +1,8 @@
 <div align="center">
 
+<img width="2172" height="724" alt="Pastel Green Developer Portfolio Banner and Avatar" src="https://github.com/user-attachments/assets/d5a6bb73-e46c-406d-9b52-d6cdbbf0de41" />
+
+
 # Hi, I'm Adarsh Kumar Kashyap 👋
 
 **Full-Stack Web Developer · MERN Stack · DSA**
